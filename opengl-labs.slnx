@@ -3,4 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="01-window-color-controls/01-window-color-controls.vcxproj" Id="bc0b864f-8673-4ded-9add-67deeeb33579" />
 </Solution>
