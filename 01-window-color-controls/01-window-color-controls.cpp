@@ -19,23 +19,19 @@ import std;
 
 import <GL/glew.h>;
 import <GLFW/glfw3.h>;
+import <glm/glm.hpp>;
 
-struct Vector3
-{
-    float x;
-    float y;
-    float z;
-};
+using glm::vec3;
 
 std::random_device rd{};
 std::default_random_engine dre{ rd() };
 std::uniform_real_distribution<float> urd{ 0.0f, 1.0f };
 
-Vector3 bgColor{ 1.0f, 1.0f, 1.0f };	// Inital background color
+vec3 bgColor{ 1.0f, 1.0f, 1.0f };	// Inital background color
 bool enabledTimer{};
 
-void InputProcess(GLFWwindow* window);
-void DrawScene();
+void processInput(GLFWwindow* window);
+void drawScene();
 
 int main()
 {
@@ -47,7 +43,7 @@ int main()
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);	// This exercise uses legacy OpenGL features.
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window{ glfwCreateWindow(800, 600, "OpenGL Labs 01", nullptr, nullptr) };
     if (!window)
@@ -72,21 +68,22 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
-        InputProcess(window);
+        glfwPollEvents();
+
+        processInput(window);
 
         if (enabledTimer)
         {
             if (glfwGetTime() > 1)
             {
-                bgColor = Vector3{ urd(dre), urd(dre), urd(dre) };
+                bgColor = vec3{ urd(dre), urd(dre), urd(dre) };
                 glfwSetTime(0.0f);
             }
         }
 
-        DrawScene();
+        drawScene();
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     glfwDestroyWindow(window);
@@ -94,31 +91,31 @@ int main()
     return 0;
 }
 
-void InputProcess(GLFWwindow* window)
+void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
     {
-        bgColor = Vector3{ 0.0f, 1.0f, 1.0f };
+        bgColor = { 0.0f, 1.0f, 1.0f };
     }
     if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
     {
-        bgColor = Vector3{ 1.0f, 0.0f, 1.0f };
+        bgColor = { 1.0f, 0.0f, 1.0f };
     }
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
     {
-        bgColor = Vector3{ 1.0f, 1.0f, 0.0f };
+        bgColor = { 1.0f, 1.0f, 0.0f };
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-        bgColor = Vector3{ urd(dre), urd(dre), urd(dre) };
+        bgColor = { urd(dre), urd(dre), urd(dre) };
     }
     if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
     {
-        bgColor = Vector3{ 0.5f, 0.5f, 0.5f };
+        bgColor = { 0.5f, 0.5f, 0.5f };
     }
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
     {
-        bgColor = Vector3{ 0.0f, 0.0f, 0.0f };
+        bgColor = { 0.0f, 0.0f, 0.0f };
     }
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
     {
@@ -134,7 +131,7 @@ void InputProcess(GLFWwindow* window)
     }
 }
 
-void DrawScene()
+void drawScene()
 {
     glClearColor(bgColor.x, bgColor.y, bgColor.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
