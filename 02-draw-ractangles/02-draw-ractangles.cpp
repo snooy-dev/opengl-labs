@@ -238,7 +238,7 @@ std::tuple<int, int> getClickedRect(const double xpos, const double ypos)
     for (int i{}; i < areas.size(); ++i)
     {
         auto& area = areas[i];
-        for (int j = area.rects.size() - 1; j >= 0; --j)
+        for (int j = static_cast<int>(area.rects.size()) - 1; j >= 0; --j)
         {
             auto& rect = area.rects[j];
             const float minX{ std::min(rect.bounds.x, rect.bounds.z) };
