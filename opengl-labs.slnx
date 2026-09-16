@@ -5,4 +5,5 @@
   </Configurations>
   <Project Path="01-window-color-controls/01-window-color-controls.vcxproj" Id="bc0b864f-8673-4ded-9add-67deeeb33579" />
   <Project Path="02-draw-ractangles/02-draw-ractangles.vcxproj" Id="945c44bc-7161-472f-90bb-42718b7b52ca" />
+  <Project Path="03-move-rectangle/03-move-rectangle.vcxproj" Id="f3790ad8-d11f-4e40-bc0c-720a966137d5" />
 </Solution>
