@@ -1,4 +1,4 @@
 .vs/
 *.user
-bin/
-intermediate/
+/bin/
+/intermediate/
