@@ -6,7 +6,7 @@
 // - Divide the screen horizontally and vertically into two halves, creating four regions.
 //   - Assign each region a different random color.
 // - Use the following keyboard and mouse commands to draw shapes and modify their properties.
-//   - 1/2/3/4: Draw a rectangle at the center of the corresponding quadrant.Choose the color and size as desired.
+//   - 1/2/3/4: Draw a rectangle at the corresponding quadrant. Choose the color and size as desired.
 //     - Pressing the same key again redraws it with a different size and color.
 //     - Up to five rectangles can be drawn in each region.
 //   - Left mouse button : Select a drawn rectangle. Indicate the selected state using a method of your choice.
@@ -66,7 +66,7 @@ void drawScene();
 vec3 getRandomColor();
 void resetAreas();
 void createRect(const int areaId);
-std::tuple<int, int> getClickedRect(const double xpos, const double ypos);
+std::tuple<int, int> clickedRect(const double xpos, const double ypos);
 void scaleBounds(vec4& bounds, const float scaleFactor, const vec4& border);
 
 int main()
@@ -146,7 +146,7 @@ void processInput(GLFWwindow* window)
         double x{}, y{};
         glfwGetCursorPos(window, &x, &y);
 
-        std::tie(selectedRectId, selectedAreaId) = getClickedRect(x / windowWidth * 2 - 1.0f, 1.0f - y / windowHight * 2);
+        std::tie(selectedRectId, selectedAreaId) = clickedRect(x / windowWidth * 2 - 1.0f, 1.0f - y / windowHight * 2);
     }
 
     pollKeyPressedOnce(GLFW_KEY_EQUAL, []()
@@ -229,11 +229,20 @@ void createRect(const int areaId)
         std::uniform_real_distribution rx{ area.bounds.x, area.bounds.z };
         std::uniform_real_distribution ry{ area.bounds.y, area.bounds.w };
 
-        area.rects.push_back(Rect{ {rx(dre), ry(dre), rx(dre), ry(dre)}, getRandomColor() });
+        Rect newRect{ {rx(dre), ry(dre), rx(dre), ry(dre)}, getRandomColor() };
+        if (newRect.bounds.x > newRect.bounds.z)
+        {
+            std::swap(newRect.bounds.x, newRect.bounds.z);
+        }
+        if (newRect.bounds.y > newRect.bounds.w)
+        {
+            std::swap(newRect.bounds.y, newRect.bounds.w);
+        }
+        area.rects.push_back(std::move(newRect));
     }
 }
 
-std::tuple<int, int> getClickedRect(const double xpos, const double ypos)
+std::tuple<int, int> clickedRect(const double xpos, const double ypos)
 {
     for (int i{}; i < areas.size(); ++i)
     {
@@ -241,10 +250,10 @@ std::tuple<int, int> getClickedRect(const double xpos, const double ypos)
         for (int j = static_cast<int>(area.rects.size()) - 1; j >= 0; --j)
         {
             auto& rect = area.rects[j];
-            const float minX{ std::min(rect.bounds.x, rect.bounds.z) };
-            const float minY{ std::min(rect.bounds.y, rect.bounds.w) };
-            const float maxX{ std::max(rect.bounds.x, rect.bounds.z) };
-            const float maxY{ std::max(rect.bounds.y, rect.bounds.w) };
+            const float& minX{ rect.bounds.x };
+            const float& minY{ rect.bounds.y };
+            const float& maxX{ rect.bounds.z };
+            const float& maxY{ rect.bounds.w };
             if (minX <= xpos && xpos <= maxX && minY <= ypos && ypos <= maxY)
             {
                 Rect r = std::move(rect);
@@ -275,10 +284,7 @@ void scaleBounds(vec4& bounds, const float scaleFactor, const vec4& border)
     newBounds.z += centerX;
     newBounds.w += centerY;
 
-    if (border.x <= newBounds.x && newBounds.x <= border.z
-        && border.y <= newBounds.y && newBounds.y <= border.w
-        && border.x <= newBounds.z && newBounds.z <= border.z
-        && border.y <= newBounds.w && newBounds.w <= border.w)
+    if (border.x <= newBounds.x && border.y <= newBounds.y && newBounds.z <= border.z && newBounds.w <= border.w)
     {
         bounds = newBounds;
     }
