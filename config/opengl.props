@@ -10,6 +10,8 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)externals\glfw\include;$(SolutionDir)externals\glew\include;$(SolutionDir)externals\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <BuildStlModules>true</BuildStlModules>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)externals\glfw\lib-vc2026;$(SolutionDir)externals\glew\lib\Release\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
