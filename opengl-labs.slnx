@@ -3,7 +3,21 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".clang-format" />
+  </Folder>
   <Project Path="01-window-color-controls/01-window-color-controls.vcxproj" Id="bc0b864f-8673-4ded-9add-67deeeb33579" />
   <Project Path="02-draw-ractangles/02-draw-ractangles.vcxproj" Id="945c44bc-7161-472f-90bb-42718b7b52ca" />
   <Project Path="03-move-rectangle/03-move-rectangle.vcxproj" Id="f3790ad8-d11f-4e40-bc0c-720a966137d5" />
+  <Project Path="04-rectangle-animation/04-rectangle-animation.vcxproj" Id="505d6e01-4589-49a8-848f-696458bfb4e7" />
+  <Project Path="05-rectangle-eraser/05-rectangle-eraser.vcxproj" Id="c45e7422-79cc-436a-abd3-6b2c02fe40fa" />
+  <Project Path="06-spreading-rectangles/06-spreading-rectangles.vcxproj" Id="be553963-d1bd-4c59-95c4-db203d3beacf" />
+  <Project Path="07-draw-primitives/07-draw-primitives.vcxproj" Id="7e3db8ca-88be-4303-95f9-03dec9112af2" />
+  <Project Path="08-draw-triangles/08-draw-triangles.vcxproj" Id="9ff86cee-03a1-4e0f-874c-cb9175559220" />
+  <Project Path="09-move-triangles/09-move-triangles.vcxproj" Id="9b96b954-5f26-40c7-a3c5-586ba946f600" />
+  <Project Path="10-puzzle/10-puzzle.vcxproj" Id="bd61f4ce-6385-4368-a06c-dc696e2c886b" />
+  <Project Path="11-board-movement/11-board-movement.vcxproj" Id="7b35c5a8-3e22-4685-9f87-ae293ac56961" />
+  <Project Path="12-rectangle-stacking/12-rectangle-stacking.vcxproj" Id="c89142da-7682-4d1d-91e7-e5d30486a901" />
+  <Project Path="13-draw-3d-faces/13-draw-3d-faces.vcxproj" Id="a1786451-6f65-48bb-bef2-582e6da2dbaa" />
+  <Project Path="14-draw-3d-objects/14-draw-3d-objects.vcxproj" Id="4660ea42-18f3-40de-ad9a-aa9e4b01ec8a" />
 </Solution>

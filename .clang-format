@@ -1,0 +1,6 @@
+BasedOnStyle: Google
+IndentWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+AlignAfterOpenBracket: DontAlign
+ColumnLimit: 0
