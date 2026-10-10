@@ -23,15 +23,13 @@ import <GL/glew.h>;
 import <GLFW/glfw3.h>;
 import <glm/glm.hpp>;
 
-using glm::vec3;
-using glm::vec4;
+using namespace std;
+using namespace glm;
 
-struct Rect
-{
-    Rect(const vec4& inBounds, const vec3& inColor = {}) : bounds{ inBounds }, color{ inColor } {}
+struct Rect {
+    Rect(const vec4& in_bounds, const vec3& in_color = {}) : bounds{in_bounds}, color{in_color} {}
 
-    void move(const float dx, const float dy)
-    {
+    void Move(const float dx, const float dy) {
         bounds.x += dx;
         bounds.y += dy;
         bounds.z += dx;
@@ -42,40 +40,37 @@ struct Rect
     vec3 color;
 };
 
-const int windowWidth{ 800 };
-const int windowHight{ 600 };
+constexpr int kWindowWidth{800};
+constexpr int kWindowHeight{600};
 
-std::random_device rd{};
-std::default_random_engine dre{ rd() };
-std::uniform_real_distribution<float> urd{ 0.0f, 1.0f };
-std::uniform_real_distribution<float> rpos{ -1.0f, 1.0f };
+random_device rd{};
+default_random_engine dre{rd()};
+uniform_real_distribution<float> urd{0.0f, 1.0f};
+uniform_real_distribution<float> rpos{-1.0f, 1.0f};
 
-std::vector<Rect> rects;
-const int maxRects{ 20 };
+vector<Rect> rects;
+constexpr int kMaxRects{20};
 
-void processInput(GLFWwindow* window);
-void drawScene();
+void ProcessInput(GLFWwindow* window);
+void DrawScene();
 
-vec3 getRandomColor();
-void createRect();
-std::vector<Rect>::iterator getClickedRect(const double xpos, const double ypos);
+vec3 GetRandomColor();
+void CreateRect();
+vector<Rect>::iterator GetClickedRect(const double xpos, const double ypos);
 
-int main()
-{
-    if (!glfwInit())
-    {
-        std::cerr << "fail to init glfw!" << std::endl;
+int main() {
+    if (!glfwInit()) {
+        cerr << "fail to init glfw!" << endl;
         return 1;
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);	// Required for glColor3f() and glRectf()
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);  // Required for glColor3f() and glRectf()
 
-    GLFWwindow* window{ glfwCreateWindow(windowWidth, windowHight, "OpenGL Labs 03", nullptr, nullptr) };
-    if (!window)
-    {
-        std::cerr << "fail to create window" << std::endl;
+    GLFWwindow* window{glfwCreateWindow(kWindowWidth, kWindowHeight, "OpenGL Labs 03", nullptr, nullptr)};
+    if (!window) {
+        cerr << "fail to create window" << endl;
         glfwTerminate();
         return 1;
     }
@@ -83,9 +78,8 @@ int main()
     glfwMakeContextCurrent(window);
 
     glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
-    {
-        std::cerr << "fail to init glew" << std::endl;
+    if (glewInit() != GLEW_OK) {
+        cerr << "fail to init glew" << endl;
         glfwDestroyWindow(window);
         glfwTerminate();
         return 1;
@@ -93,13 +87,12 @@ int main()
 
     glViewport(0, 0, 800, 600);
 
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        processInput(window);
+        ProcessInput(window);
 
-        drawScene();
+        DrawScene();
 
         glfwSwapBuffers(window);
     }
@@ -109,81 +102,63 @@ int main()
     return 0;
 }
 
-void processInput(GLFWwindow* window)
-{
-    auto pollKeyPressedOnce = [=](const int key, auto func)
-        {
-            static bool isPressed{};
-            if (glfwGetKey(window, key) == GLFW_PRESS && !isPressed)
-            {
-                isPressed = true;
-                func();
-            }
-            else if (glfwGetKey(window, key) == GLFW_RELEASE)
-            {
-                isPressed = false;
-            }
-        };
+void ProcessInput(GLFWwindow* window) {
+    auto PollKeyPressedOnce = [=](const int key, auto func) {
+        static bool is_pressed{};
+        if (glfwGetKey(window, key) == GLFW_PRESS && !is_pressed) {
+            is_pressed = true;
+            func();
+        } else if (glfwGetKey(window, key) == GLFW_RELEASE) {
+            is_pressed = false;
+        }
+    };
 
-    auto pollMousePressedOnce = [=](const int key, auto func)
-        {
-            static bool isPressed{};
-            if (glfwGetMouseButton(window, key) == GLFW_PRESS && !isPressed)
-            {
-                isPressed = true;
-                func();
-            }
-            else if (glfwGetMouseButton(window, key) == GLFW_RELEASE)
-            {
-                isPressed = false;
-            }
-        };
+    auto PollMousePressedOnce = [=](const int key, auto func) {
+        static bool is_pressed{};
+        if (glfwGetMouseButton(window, key) == GLFW_PRESS && !is_pressed) {
+            is_pressed = true;
+            func();
+        } else if (glfwGetMouseButton(window, key) == GLFW_RELEASE) {
+            is_pressed = false;
+        }
+    };
 
-    pollKeyPressedOnce(GLFW_KEY_A, []() { createRect(); });
+    PollKeyPressedOnce(GLFW_KEY_A, []() { CreateRect(); });
 
-    static double prevX{}, prevY{};
-    static bool isDrag{};
-    static std::vector<Rect>::iterator selectedRect{};
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-    {
+    static double prev_x{}, prev_y{};
+    static bool is_drag{};
+    static vector<Rect>::iterator selected_rect{};
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         double x{}, y{};
         glfwGetCursorPos(window, &x, &y);
-        x = x / windowWidth * 2 - 1.0f;
-        y = 1.0f - y / windowHight * 2;
+        x = x / kWindowWidth * 2 - 1.0f;
+        y = 1.0f - y / kWindowHeight * 2;
 
-
-        if (!isDrag)
-        {
-            selectedRect = getClickedRect(x, y);
-            prevX = x;
-            prevY = y;
-            isDrag = true;
+        if (!is_drag) {
+            selected_rect = GetClickedRect(x, y);
+            prev_x = x;
+            prev_y = y;
+            is_drag = true;
         }
 
-        if (selectedRect != rects.end())
-        {
-            selectedRect->move(static_cast<float>(x - prevX), static_cast<float>(y - prevY));
-            prevX = x;
-            prevY = y;
+        if (selected_rect != rects.end()) {
+            selected_rect->Move(static_cast<float>(x - prev_x), static_cast<float>(y - prev_y));
+            prev_x = x;
+            prev_y = y;
         }
-    }
-    else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE && isDrag)
-    {
-        isDrag = false;
-        const float& minX{ selectedRect->bounds.x };
-        const float& minY{ selectedRect->bounds.y };
-        const float& maxX{ selectedRect->bounds.z };
-        const float& maxY{ selectedRect->bounds.w };
-        for (auto it = rects.rbegin(); it != rects.rend(); ++it)
-        {
-            if (std::prev(it.base()) != selectedRect)
-            {
-                if (!(it->bounds.x > maxX || it->bounds.z < minX || it->bounds.y > maxY || it->bounds.w < minY))
-                {
-                    selectedRect->bounds.x = std::min(minX, it->bounds.x);
-                    selectedRect->bounds.y = std::min(minY, it->bounds.y);
-                    selectedRect->bounds.z = std::max(maxX, it->bounds.z);
-                    selectedRect->bounds.w = std::max(maxY, it->bounds.w);
+    } else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE && is_drag) {
+        is_drag = false;
+        const float& min_x{selected_rect->bounds.x};
+        const float& min_y{selected_rect->bounds.y};
+        const float& max_x{selected_rect->bounds.z};
+        const float& max_y{selected_rect->bounds.w};
+        for (auto it = rects.rbegin(); it != rects.rend(); ++it) {
+            if (std::prev(it.base()) != selected_rect) {
+                if (!(it->bounds.x > max_x || it->bounds.z < min_x || it->bounds.y > max_y || it->bounds.w < min_y)) {
+                    selected_rect->bounds.x = std::min(min_x, it->bounds.x);
+                    selected_rect->bounds.y = std::min(min_y, it->bounds.y);
+                    selected_rect->bounds.z = std::max(max_x, it->bounds.z);
+                    selected_rect->bounds.w = std::max(max_y, it->bounds.w);
                     rects.erase(std::prev(it.base()));
                     break;
                 }
@@ -191,65 +166,50 @@ void processInput(GLFWwindow* window)
         }
     }
 
-    pollMousePressedOnce(GLFW_MOUSE_BUTTON_RIGHT, [=]()
-        {
-            {
-                if (rects.size() < maxRects)
-                {
-                    double x{}, y{};
-                    glfwGetCursorPos(window, &x, &y);
-                    auto it = getClickedRect(x / windowWidth * 2 - 1.0f, 1.0f - y / windowHight * 2);
-                    if (it != rects.end())
-                    {
-                        rects.erase(it);
-                        createRect();
-                        createRect();
-                    }
-                }
+    PollMousePressedOnce(GLFW_MOUSE_BUTTON_RIGHT, [=]() {
+        if (rects.size() < kMaxRects) {
+            double x{}, y{};
+            glfwGetCursorPos(window, &x, &y);
+            auto it = GetClickedRect(x / kWindowWidth * 2 - 1.0f, 1.0f - y / kWindowHeight * 2);
+            if (it != rects.end()) {
+                rects.erase(it);
+                CreateRect();
+                CreateRect();
             }
-        });
+        }
+    });
 }
 
-void drawScene()
-{
+void DrawScene() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    for (const auto& rect : rects)
-    {
+    for (const auto& rect : rects) {
         glColor3f(rect.color.x, rect.color.y, rect.color.z);
         glRectf(rect.bounds.x, rect.bounds.y, rect.bounds.z, rect.bounds.w);
     }
 }
 
-vec3 getRandomColor()
-{
-    return { urd(dre), urd(dre), urd(dre) };
+vec3 GetRandomColor() {
+    return {urd(dre), urd(dre), urd(dre)};
 }
 
-void createRect()
-{
-    if (rects.size() < maxRects)
-    {
-        Rect newRect{ {rpos(dre), rpos(dre), rpos(dre), rpos(dre)}, getRandomColor() };
-        if (newRect.bounds.x > newRect.bounds.z)
-        {
-            std::swap(newRect.bounds.x, newRect.bounds.z);
+void CreateRect() {
+    if (rects.size() < kMaxRects) {
+        Rect new_rect{{rpos(dre), rpos(dre), rpos(dre), rpos(dre)}, GetRandomColor()};
+        if (new_rect.bounds.x > new_rect.bounds.z) {
+            std::swap(new_rect.bounds.x, new_rect.bounds.z);
         }
-        if (newRect.bounds.y > newRect.bounds.w)
-        {
-            std::swap(newRect.bounds.y, newRect.bounds.w);
+        if (new_rect.bounds.y > new_rect.bounds.w) {
+            std::swap(new_rect.bounds.y, new_rect.bounds.w);
         }
-        rects.push_back(std::move(newRect));
+        rects.push_back(std::move(new_rect));
     }
 }
 
-std::vector<Rect>::iterator getClickedRect(const double xpos, const double ypos)
-{
-    for (auto it = rects.rbegin(); it != rects.rend(); ++it)
-    {
-        if (it->bounds.x <= xpos && xpos <= it->bounds.z && it->bounds.y <= ypos && ypos <= it->bounds.w)
-        {
+vector<Rect>::iterator GetClickedRect(const double xpos, const double ypos) {
+    for (auto it = rects.rbegin(); it != rects.rend(); ++it) {
+        if (it->bounds.x <= xpos && xpos <= it->bounds.z && it->bounds.y <= ypos && ypos <= it->bounds.w) {
             return std::prev(it.base());
         }
     }

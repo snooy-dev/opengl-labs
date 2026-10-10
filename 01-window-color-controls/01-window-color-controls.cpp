@@ -4,16 +4,16 @@
 // - Create and display an 800 × 600 window.
 //   - Set the initial background color to white.
 // - Display the window and change the background color based on keyboard input.
-//   - Keyboard inputs :
-//     - c : Cyan(green + blue)
-//     - m : Magenta(red + blue)
-//     - y : Yellow(red + green)
-//     - a : Random color
-//     - g : Gray
-//     - k : Black
-//     - t : Start a timer that continuously changes the background to a random color at specified intervals.
-//     - s : Stop the timer.
-//     - esc : Exit the program.
+// Keyboard inputs :
+// - c : Cyan(green + blue)
+// - m : Magenta(red + blue)
+// - y : Yellow(red + green)
+// - a : Random color
+// - g : Gray
+// - k : Black
+// - t : Start a timer that continuously changes the background to a random color at specified intervals.
+// - s : Stop the timer.
+// - esc : Exit the program.
 
 import std;
 
@@ -21,23 +21,25 @@ import <GL/glew.h>;
 import <GLFW/glfw3.h>;
 import <glm/glm.hpp>;
 
-using glm::vec3;
+using namespace std;
+using namespace glm;
 
-std::random_device rd{};
-std::default_random_engine dre{ rd() };
-std::uniform_real_distribution<float> urd{ 0.0f, 1.0f };
+constexpr int kWindowWidth{800};
+constexpr int kWindowHeight{600};
 
-vec3 bgColor{ 1.0f, 1.0f, 1.0f };	// Inital background color
-bool enabledTimer{};
+random_device rd;
+default_random_engine dre{rd()};
+uniform_real_distribution<float> urd{0.0f, 1.0f};
 
-void processInput(GLFWwindow* window);
-void drawScene();
+vec3 bg_color{1.0f, 1.0f, 1.0f};  // Inital background color
+bool enable_timer{};
 
-int main()
-{
-    if (!glfwInit())
-    {
-        std::cerr << "fail to init glfw!" << std::endl;
+void ProcessInput(GLFWwindow* window);
+void DrawScene();
+
+int main() {
+    if (!glfwInit()) {
+        cerr << "fail to init glfw!" << endl;
         return 1;
     }
 
@@ -45,10 +47,9 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window{ glfwCreateWindow(800, 600, "OpenGL Labs 01", nullptr, nullptr) };
-    if (!window)
-    {
-        std::cerr << "fail to create window" << std::endl;
+    GLFWwindow* window{glfwCreateWindow(kWindowWidth, kWindowHeight, "OpenGL Labs 01", nullptr, nullptr)};
+    if (!window) {
+        cerr << "fail to create window" << endl;
         glfwTerminate();
         return 1;
     }
@@ -56,32 +57,28 @@ int main()
     glfwMakeContextCurrent(window);
 
     glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
-    {
-        std::cerr << "fail to init glew" << std::endl;
+    if (glewInit() != GLEW_OK) {
+        cerr << "fail to init glew" << endl;
         glfwDestroyWindow(window);
         glfwTerminate();
         return 1;
     }
 
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, kWindowWidth, kWindowHeight);
 
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        processInput(window);
+        ProcessInput(window);
 
-        if (enabledTimer)
-        {
-            if (glfwGetTime() > 1)
-            {
-                bgColor = vec3{ urd(dre), urd(dre), urd(dre) };
+        if (enable_timer) {
+            if (glfwGetTime() > 1) {
+                bg_color = vec3{urd(dre), urd(dre), urd(dre)};
                 glfwSetTime(0.0f);
             }
         }
 
-        drawScene();
+        DrawScene();
 
         glfwSwapBuffers(window);
     }
@@ -91,48 +88,37 @@ int main()
     return 0;
 }
 
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-    {
-        bgColor = { 0.0f, 1.0f, 1.0f };
+void ProcessInput(GLFWwindow* window) {
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+        bg_color = {0.0f, 1.0f, 1.0f};
     }
-    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
-    {
-        bgColor = { 1.0f, 0.0f, 1.0f };
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+        bg_color = {1.0f, 0.0f, 1.0f};
     }
-    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
-    {
-        bgColor = { 1.0f, 1.0f, 0.0f };
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
+        bg_color = {1.0f, 1.0f, 0.0f};
     }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        bgColor = { urd(dre), urd(dre), urd(dre) };
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        bg_color = {urd(dre), urd(dre), urd(dre)};
     }
-    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
-    {
-        bgColor = { 0.5f, 0.5f, 0.5f };
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+        bg_color = {0.5f, 0.5f, 0.5f};
     }
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-    {
-        bgColor = { 0.0f, 0.0f, 0.0f };
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+        bg_color = {0.0f, 0.0f, 0.0f};
     }
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-    {
-        enabledTimer = true;
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+        enable_timer = true;
     }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        enabledTimer = false;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        enable_timer = false;
     }
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
 }
 
-void drawScene()
-{
-    glClearColor(bgColor.x, bgColor.y, bgColor.z, 1.0f);
+void DrawScene() {
+    glClearColor(bg_color.x, bg_color.y, bg_color.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }

@@ -21,70 +21,64 @@ import <GL/glew.h>;
 import <GLFW/glfw3.h>;
 import <glm/glm.hpp>;
 
-using glm::vec3;
-using glm::vec4;
+using namespace std;
+using namespace glm;
 
-struct Rect
-{
-    Rect(const vec4& inBounds, const vec3& inColor = {}) : bounds{ inBounds }, color{ inColor } {}
+struct Rect {
+    Rect(const vec4& in_bounds, const vec3& in_color = {}) : bounds{in_bounds}, color{in_color} {}
 
     vec4 bounds;
     vec3 color;
 };
 
-struct Area
-{
-    Area(const vec4& inBounds) : bounds{ inBounds } {}
+struct Area {
+    Area(const vec4& in_bounds) : bounds{in_bounds} {}
 
     const vec4 bounds;
     vec3 color{};
-    std::vector<Rect> rects{};
+    vector<Rect> rects{};
 };
 
-const int windowWidth{ 800 };
-const int windowHight{ 600 };
+constexpr int kWindowWidth{800};
+constexpr int kWindowHeight{600};
 
-std::random_device rd{};
-std::default_random_engine dre{ rd() };
-std::uniform_real_distribution<float> urd{ 0.0f, 1.0f };
+random_device rd;
+default_random_engine dre{rd()};
+uniform_real_distribution<float> urd{0.0f, 1.0f};
 
-std::array<Area, 4> areas{
-    Area{{-1.0f,  0.0f,  0.0f,  1.0f}},
-    Area{{ 0.0f,  0.0f,  1.0f,  1.0f}},
-    Area{{-1.0f, -1.0f,  0.0f,  0.0f}},
-    Area{{ 0.0f, -1.0f,  1.0f,  0.0f}}
-};
+array<Area, 4> areas{
+    Area{{-1.0f, 0.0f, 0.0f, 1.0f}},
+    Area{{0.0f, 0.0f, 1.0f, 1.0f}},
+    Area{{-1.0f, -1.0f, 0.0f, 0.0f}},
+    Area{{0.0f, -1.0f, 1.0f, 0.0f}}};
 
-const int maxRects{ 5 };
+constexpr int kMaxRects{5};
 
-int selectedRectId{ -1 };
-int selectedAreaId{ -1 };
+int selected_rect_id{-1};
+int selected_area_id{-1};
 
-void processInput(GLFWwindow* window);
-void drawScene();
+void ProcessInput(GLFWwindow* window);
+void DrawScene();
 
-vec3 getRandomColor();
-void resetAreas();
-void createRect(const int areaId);
-std::tuple<int, int> clickedRect(const double xpos, const double ypos);
-void scaleBounds(vec4& bounds, const float scaleFactor, const vec4& border);
+vec3 GetRandomColor();
+void ResetAreas();
+void CreateRect(const int area_id);
+tuple<int, int> ClickedRect(const double xpos, const double ypos);
+void ScaleBounds(vec4& bounds, const float scale_factor, const vec4& border);
 
-int main()
-{
-    if (!glfwInit())
-    {
-        std::cerr << "fail to init glfw!" << std::endl;
+int main() {
+    if (!glfwInit()) {
+        cerr << "fail to init glfw!" << endl;
         return 1;
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);	// Required for glColor3f() and glRectf()
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);  // Required for glColor3f() and glRectf()
 
-    GLFWwindow* window{ glfwCreateWindow(windowWidth, windowHight, "OpenGL Labs 02", nullptr, nullptr) };
-    if (!window)
-    {
-        std::cerr << "fail to create window" << std::endl;
+    GLFWwindow* window{glfwCreateWindow(kWindowWidth, kWindowHeight, "OpenGL Labs 02", nullptr, nullptr)};
+    if (!window) {
+        cerr << "fail to create window" << endl;
         glfwTerminate();
         return 1;
     }
@@ -92,9 +86,8 @@ int main()
     glfwMakeContextCurrent(window);
 
     glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
-    {
-        std::cerr << "fail to init glew" << std::endl;
+    if (glewInit() != GLEW_OK) {
+        cerr << "fail to init glew" << endl;
         glfwDestroyWindow(window);
         glfwTerminate();
         return 1;
@@ -102,15 +95,14 @@ int main()
 
     glViewport(0, 0, 800, 600);
 
-    resetAreas();
+    ResetAreas();
 
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        processInput(window);
+        ProcessInput(window);
 
-        drawScene();
+        DrawScene();
 
         glfwSwapBuffers(window);
     }
@@ -120,85 +112,67 @@ int main()
     return 0;
 }
 
-void processInput(GLFWwindow* window)
-{
-    auto pollKeyPressedOnce = [=](const int key, auto func)
-        {
-            static bool isPressed{};
-            if (glfwGetKey(window, key) == GLFW_PRESS && !isPressed)
-            {
-                isPressed = true;
-                func();
-            }
-            else if (glfwGetKey(window, key) == GLFW_RELEASE)
-            {
-                isPressed = false;
-            }
-        };
+void ProcessInput(GLFWwindow* window) {
+    auto PollKeyPressedOnce = [=](const int key, auto func) {
+        static bool is_pressed{};
+        if (glfwGetKey(window, key) == GLFW_PRESS && !is_pressed) {
+            is_pressed = true;
+            func();
+        } else if (glfwGetKey(window, key) == GLFW_RELEASE) {
+            is_pressed = false;
+        }
+    };
 
-    pollKeyPressedOnce(GLFW_KEY_1, []() { createRect(0); });
-    pollKeyPressedOnce(GLFW_KEY_2, []() { createRect(1); });
-    pollKeyPressedOnce(GLFW_KEY_3, []() { createRect(2); });
-    pollKeyPressedOnce(GLFW_KEY_4, []() { createRect(3); });
+    PollKeyPressedOnce(GLFW_KEY_1, []() { CreateRect(0); });
+    PollKeyPressedOnce(GLFW_KEY_2, []() { CreateRect(1); });
+    PollKeyPressedOnce(GLFW_KEY_3, []() { CreateRect(2); });
+    PollKeyPressedOnce(GLFW_KEY_4, []() { CreateRect(3); });
 
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-    {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         double x{}, y{};
         glfwGetCursorPos(window, &x, &y);
 
-        std::tie(selectedRectId, selectedAreaId) = clickedRect(x / windowWidth * 2 - 1.0f, 1.0f - y / windowHight * 2);
+        tie(selected_rect_id, selected_area_id) = ClickedRect(x / kWindowWidth * 2 - 1.0f, 1.0f - y / kWindowHeight * 2);
     }
 
-    pollKeyPressedOnce(GLFW_KEY_EQUAL, []()
-        {
-            if (selectedRectId != -1)
-            {
-                scaleBounds(areas[selectedAreaId].rects[selectedRectId].bounds, 1.1f, areas[selectedAreaId].bounds);
-            }
-        });
+    PollKeyPressedOnce(GLFW_KEY_EQUAL, []() {
+        if (selected_rect_id != -1) {
+            ScaleBounds(areas[selected_area_id].rects[selected_rect_id].bounds, 1.1f, areas[selected_area_id].bounds);
+        }
+    });
 
-    pollKeyPressedOnce(GLFW_KEY_MINUS, []()
-        {
-            if (selectedRectId != -1)
-            {
-                scaleBounds(areas[selectedAreaId].rects[selectedRectId].bounds, 0.9f, areas[selectedAreaId].bounds);
-            }
-        });
+    PollKeyPressedOnce(GLFW_KEY_MINUS, []() {
+        if (selected_rect_id != -1) {
+            ScaleBounds(areas[selected_area_id].rects[selected_rect_id].bounds, 0.9f, areas[selected_area_id].bounds);
+        }
+    });
 
-    pollKeyPressedOnce(GLFW_KEY_C, []()
-        {
-            if (selectedRectId)
-            {
-                areas[selectedAreaId].rects[selectedRectId].color = getRandomColor();
-            }
-        });
+    PollKeyPressedOnce(GLFW_KEY_C, []() {
+        if (selected_rect_id) {
+            areas[selected_area_id].rects[selected_rect_id].color = GetRandomColor();
+        }
+    });
 
-    pollKeyPressedOnce(GLFW_KEY_R, []() { resetAreas(); });
+    PollKeyPressedOnce(GLFW_KEY_R, []() { ResetAreas(); });
 
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-    {
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
 }
 
-void drawScene()
-{
+void DrawScene() {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    for (const auto& area : areas)
-    {
+    for (const auto& area : areas) {
         glColor3f(area.color.x, area.color.y, area.color.z);
         glRectf(area.bounds.x, area.bounds.y, area.bounds.z, area.bounds.w);
     }
 
-    for (int i{}; i < areas.size(); ++i)
-    {
+    for (int i{}; i < areas.size(); ++i) {
         auto& area = areas[i];
-        for (int j{}; j < area.rects.size(); ++j)
-        {
+        for (int j{}; j < area.rects.size(); ++j) {
             auto& rect = area.rects[j];
-            if (i == selectedAreaId && j == selectedRectId && static_cast<int>(glfwGetTime() * 4) % 2)
-            {
+            if (i == selected_area_id && j == selected_rect_id && static_cast<int>(glfwGetTime() * 4) % 2) {
                 continue;
             }
             glColor3f(rect.color.x, rect.color.y, rect.color.z);
@@ -207,85 +181,72 @@ void drawScene()
     }
 }
 
-vec3 getRandomColor()
-{
-    return { urd(dre), urd(dre), urd(dre) };
+vec3 GetRandomColor() {
+    return {urd(dre), urd(dre), urd(dre)};
 }
 
-void resetAreas()
-{
-    for (auto& area : areas)
-    {
-        area.color = getRandomColor();
+void ResetAreas() {
+    for (auto& area : areas) {
+        area.color = GetRandomColor();
         area.rects.clear();
     }
 }
 
-void createRect(const int areaId)
-{
-    auto& area = areas[areaId];
-    if (area.rects.size() < maxRects)
-    {
-        std::uniform_real_distribution rx{ area.bounds.x, area.bounds.z };
-        std::uniform_real_distribution ry{ area.bounds.y, area.bounds.w };
+void CreateRect(const int area_id) {
+    auto& area = areas[area_id];
+    if (area.rects.size() < kMaxRects) {
+        uniform_real_distribution rx{area.bounds.x, area.bounds.z};
+        uniform_real_distribution ry{area.bounds.y, area.bounds.w};
 
-        Rect newRect{ {rx(dre), ry(dre), rx(dre), ry(dre)}, getRandomColor() };
-        if (newRect.bounds.x > newRect.bounds.z)
-        {
-            std::swap(newRect.bounds.x, newRect.bounds.z);
+        Rect new_rect{{rx(dre), ry(dre), rx(dre), ry(dre)}, GetRandomColor()};
+        if (new_rect.bounds.x > new_rect.bounds.z) {
+            swap(new_rect.bounds.x, new_rect.bounds.z);
         }
-        if (newRect.bounds.y > newRect.bounds.w)
-        {
-            std::swap(newRect.bounds.y, newRect.bounds.w);
+        if (new_rect.bounds.y > new_rect.bounds.w) {
+            swap(new_rect.bounds.y, new_rect.bounds.w);
         }
-        area.rects.push_back(std::move(newRect));
+        area.rects.push_back(move(new_rect));
     }
 }
 
-std::tuple<int, int> clickedRect(const double xpos, const double ypos)
-{
-    for (int i{}; i < areas.size(); ++i)
-    {
+tuple<int, int> ClickedRect(const double xpos, const double ypos) {
+    for (int i{}; i < areas.size(); ++i) {
         auto& area = areas[i];
-        for (int j = static_cast<int>(area.rects.size()) - 1; j >= 0; --j)
-        {
+        for (int j = static_cast<int>(area.rects.size()) - 1; j >= 0; --j) {
             auto& rect = area.rects[j];
-            const float& minX{ rect.bounds.x };
-            const float& minY{ rect.bounds.y };
-            const float& maxX{ rect.bounds.z };
-            const float& maxY{ rect.bounds.w };
-            if (minX <= xpos && xpos <= maxX && minY <= ypos && ypos <= maxY)
-            {
-                Rect r = std::move(rect);
+            const float& min_x{rect.bounds.x};
+            const float& min_y{rect.bounds.y};
+            const float& max_x{rect.bounds.z};
+            const float& max_y{rect.bounds.w};
+            if (min_x <= xpos && xpos <= max_x && min_y <= ypos && ypos <= max_y) {
+                Rect r = move(rect);
                 area.rects.erase(area.rects.begin() + j);
-                area.rects.push_back(std::move(r));
-                return { j, i };
+                area.rects.push_back(move(r));
+                return {j, i};
             }
         }
     }
-    return { -1, -1 };
+    return {-1, -1};
 }
 
-void scaleBounds(vec4& bounds, const float scaleFactor, const vec4& border)
-{
-    const float centerX{ (bounds.x + bounds.z) * 0.5f };
-    const float centerY{ (bounds.y + bounds.w) * 0.5f };
+void ScaleBounds(vec4& bounds, const float scale_factor, const vec4& border) {
+    const float center_x{(bounds.x + bounds.z) * 0.5f};
+    const float center_y{(bounds.y + bounds.w) * 0.5f};
 
-    vec4 newBounds{ bounds };
-    newBounds.x -= centerX;
-    newBounds.y -= centerY;
-    newBounds.z -= centerX;
-    newBounds.w -= centerY;
+    vec4 new_bounds{bounds};
+    new_bounds.x -= center_x;
+    new_bounds.y -= center_y;
+    new_bounds.z -= center_x;
+    new_bounds.w -= center_y;
 
-    newBounds *= scaleFactor;
+    new_bounds *= scale_factor;
 
-    newBounds.x += centerX;
-    newBounds.y += centerY;
-    newBounds.z += centerX;
-    newBounds.w += centerY;
+    new_bounds.x += center_x;
+    new_bounds.y += center_y;
+    new_bounds.z += center_x;
+    new_bounds.w += center_y;
 
-    if (border.x <= newBounds.x && border.y <= newBounds.y && newBounds.z <= border.z && newBounds.w <= border.w)
-    {
-        bounds = newBounds;
+    if (border.x <= new_bounds.x && border.y <= new_bounds.y && new_bounds.z <= border.z && new_bounds.w <= border.w) {
+        bounds = new_bounds;
     }
 }
