@@ -101,10 +101,10 @@ const vector<MeshData> kMeshData{
             {1.0f, -1.0f, 0.0f}},
         {0, 1, 2}},
     {"quad", GL_TRIANGLES,
-        {{1.0f, 1.0f, 1.0f},
-            {-1.0f, 1.0f, 1.0f},
-            {-1.0f, -1.0f, 1.0f},
-            {1.0f, -1.0f, 1.0f}},
+        {{1.0f, 1.0f, 0.0f},
+            {-1.0f, 1.0f, 0.0f},
+            {-1.0f, -1.0f, 0.0f},
+            {1.0f, -1.0f, 0.0f}},
         {0, 1, 2, 0, 2, 3}}};
 
 MeshType current_mesh_type{MeshType::kCube};
@@ -306,18 +306,24 @@ void ProcessInput(GLFWwindow* window) {
         });
         PollKeyPressedOnce(GLFW_KEY_F, []() {
             auto& front = scene[7];
+            front.pivot = {0.0f, 1.0f, 0.0f};
             if (current_anim == 2) {
                 current_anim = 0;
-                anim_func = {};
+                anim_func = [&front](const float delta_time) {
+                    if (front.local_rotation.x >= 0.0f) {
+                        anim_func = {};
+                        return;
+                    }
+                    front.local_rotation.x = std::clamp(front.local_rotation.x + 50.0f * delta_time, -90.0f, 0.0f);
+                };
             } else {
                 current_anim = 2;
-                front.pivot = {};
-                front.local_rotation = {};
                 anim_func = [&front](const float delta_time) {
-                    static float elapsed_time{};
-                    front.pivot = {0.0f, 1.0f, 1.0f};
-                    front.local_rotation.x += 90.0f * -cos(fmod(elapsed_time, numbers::pi_v<float>)) * delta_time;
-                    elapsed_time += delta_time;
+                    if (front.local_rotation.x <= -90.0f) {
+                        anim_func = {};
+                        return;
+                    }
+                    front.local_rotation.x = std::clamp(front.local_rotation.x - 50.0f * delta_time, -90.0f, 0.0f);
                 };
             }
         });
@@ -368,10 +374,10 @@ void ProcessInput(GLFWwindow* window) {
                 side2.pivot = {};
                 side2.local_rotation.y = {};
                 anim_func = [&side1, &side2](const float delta_time) {
-                    side1.pivot = {-1.0f, 0.0f, 1.0f};
+                    side1.pivot = {-1.0f, 0.0f, 0.0f};
                     side1.local_rotation.y += 50.0f * delta_time;
-                    side2.pivot = {1.0f, 0.0f, 1.0f};
-                    side2.local_rotation.y += 50.0f * delta_time;
+                    side2.pivot = {1.0f, 0.0f, 0.0f};
+                    side2.local_rotation.y -= 50.0f * delta_time;
                 };
             }
         });
@@ -382,7 +388,7 @@ void ProcessInput(GLFWwindow* window) {
             const int side_idx{rand_side(dre)};
             auto& side1 = *sides[side_idx];
             auto& side2 = *sides[(side_idx + 1) % 4];
-            static float rotated_angle{};
+            /*static float rotated_angle{};
             rotated_angle = 0.0f;
             anim_func = [=, &side1, &side2](const float delta_time) {
                 if (rotated_angle >= 90.0f) {
@@ -395,6 +401,22 @@ void ProcessInput(GLFWwindow* window) {
                 side1.rotation.y -= delta_angle;
                 side2.rotation.y += delta_angle;
                 rotated_angle += delta_angle;
+            };*/
+            static float rotated_angle{};
+            rotated_angle = 0.0f;
+            anim_func = [&side1, &side2](const float delta_time) {
+                if (rotated_angle >= 90.0f) {
+                    current_anim = 0;
+                    swap(side1, side2);
+                    anim_func = {};
+                    return;
+                }
+                const float delta_angle{std::clamp(rotated_angle + 50.0f * delta_time, 0.0f, 90.0f) - rotated_angle};
+                side1.rotation.y -= delta_angle;
+                side1.position = vec3{sin(radians(side1.rotation.y)), 0.0f, cos(radians(side1.rotation.y))} * 1.0f;
+                side2.rotation.y += delta_angle;
+                side2.position = vec3{sin(radians(side2.rotation.y)), 0.0f, cos(radians(side2.rotation.y))} * 1.0f;
+                rotated_angle += delta_angle;
             };
         });
 
@@ -404,10 +426,23 @@ void ProcessInput(GLFWwindow* window) {
                 anim_func = {};
             } else {
                 current_anim = 7;
-                const array<Object*, 4> sides{&scene[3], &scene[7], &scene[4], &scene[8]};
+                const array<Object*, 4> sides{&scene[3], &scene[4], &scene[7], &scene[8]};
+                static float rotated_angle{};
+                rotated_angle = 0.0f;
                 anim_func = [sides](const float delta_time) {
-                    for (auto* side : sides)
-                        side->rotation.y += 50.0f * delta_time;
+                    const float delta_angle{std::clamp(rotated_angle + 50.0f * delta_time, 0.0f, 90.0f) - rotated_angle};
+                    for (auto side : sides) {
+                        const int sign{cos(radians(side->rotation.x)) < 0 ? -1 : 1};
+                        if (rotated_angle >= 90.0f) {
+                            swap(scene[3], scene[7]);
+                            swap(scene[7], scene[4]);
+                            swap(scene[4], scene[8]);
+                            rotated_angle = 0.0f;
+                        }
+                        side->rotation.y += delta_angle;
+                        side->position = vec3{sign * sin(radians(side->rotation.y)), 0.0f, sign * cos(radians(side->rotation.y))} * 1.0f;
+                    }
+                    rotated_angle += delta_angle;
                 };
             }
         });
@@ -417,10 +452,23 @@ void ProcessInput(GLFWwindow* window) {
                 anim_func = {};
             } else {
                 current_anim = 8;
-                const array<Object*, 4> sides{&scene[5], &scene[7], &scene[6], &scene[8]};
+                const array<Object*, 4> sides{&scene[5], &scene[6], &scene[7], &scene[8]};
+                static float rotated_angle{};
+                rotated_angle = 0.0f;
                 anim_func = [sides](const float delta_time) {
-                    for (auto* side : sides)
-                        side->rotation.x += 50.0f * delta_time;
+                    const float delta_angle{std::clamp(rotated_angle + 50.0f * delta_time, 0.0f, 90.0f) - rotated_angle};
+                    for (auto side : sides) {
+                        const int sign{cos(radians(side->rotation.y)) < 0 ? -1 : 1};
+                        if (rotated_angle >= 90.0f) {
+                            swap(scene[5], scene[8]);
+                            swap(scene[8], scene[6]);
+                            swap(scene[6], scene[7]);
+                            rotated_angle = 0.0f;
+                        }
+                        side->rotation.x += sign * delta_angle;
+                        side->position = vec3{0.0f, -sin(radians(side->rotation.x)), sign * cos(radians(side->rotation.x))} * 1.0f;
+                    }
+                    rotated_angle += delta_angle;
                 };
             }
         });
@@ -603,12 +651,12 @@ void Initialize() {
         {"line", {}, {0.0f, -90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0, 0.5f}},  // axis Z
 
         // cube
-        {"quad", {}, {0.0f, 90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-        {"quad", {}, {0.0f, -90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f}},
-        {"quad", {}, {-90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-        {"quad", {}, {90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
-        {"quad", {}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-        {"quad", {}, {0.0f, 180.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}},
+        {"quad", {1.0f, 0.0f, 0.0f}, {0.0f, 90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
+        {"quad", {-1.0f, 0.0f, 0.0f}, {0.0f, -90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f}},
+        {"quad", {0.0f, 1.0f, 0.0f}, {-90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+        {"quad", {0.0f, -1.0f, 0.0f}, {90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+        {"quad", {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+        {"quad", {0.0f, 0.0f, -1.0f}, {0.0f, 180.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}},
 
         // pyramid
         {"tri", {0.5f, 0.0f, 0.0f}, {-30.0f, 90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, true},
