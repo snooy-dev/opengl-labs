@@ -20,4 +20,5 @@
   <Project Path="12-rectangle-stacking/12-rectangle-stacking.vcxproj" Id="c89142da-7682-4d1d-91e7-e5d30486a901" />
   <Project Path="13-draw-3d-faces/13-draw-3d-faces.vcxproj" Id="a1786451-6f65-48bb-bef2-582e6da2dbaa" />
   <Project Path="14-draw-3d-objects/14-draw-3d-objects.vcxproj" Id="4660ea42-18f3-40de-ad9a-aa9e4b01ec8a" />
+  <Project Path="15-16-3d-faces-animations/15-16-3d-faces-animations.vcxproj" Id="27567e73-2186-4ace-9989-12ffb2d8f58d" />
 </Solution>
