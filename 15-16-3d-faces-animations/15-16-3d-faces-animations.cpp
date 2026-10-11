@@ -101,10 +101,10 @@ const vector<MeshData> kMeshData{
             {1.0f, -1.0f, 0.0f}},
         {0, 1, 2}},
     {"quad", GL_TRIANGLES,
-        {{1.0f, 1.0f, 0.0f},
-            {-1.0f, 1.0f, 0.0f},
-            {-1.0f, -1.0f, 0.0f},
-            {1.0f, -1.0f, 0.0f}},
+        {{1.0f, 1.0f, 1.0f},
+            {-1.0f, 1.0f, 1.0f},
+            {-1.0f, -1.0f, 1.0f},
+            {1.0f, -1.0f, 1.0f}},
         {0, 1, 2, 0, 2, 3}}};
 
 MeshType current_mesh_type{MeshType::kCube};
@@ -300,7 +300,7 @@ void ProcessInput(GLFWwindow* window) {
                 top.pivot = {};
                 top.local_rotation = {};
                 anim_func = [&top](const float delta_time) {
-                    top.local_rotation.y += 50.0f * delta_time;
+                    top.local_rotation.z += 50.0f * delta_time;
                 };
             }
         });
@@ -315,7 +315,7 @@ void ProcessInput(GLFWwindow* window) {
                 front.local_rotation = {};
                 anim_func = [&front](const float delta_time) {
                     static float elapsed_time{};
-                    front.pivot.y = 1.0f;
+                    front.pivot = {0.0f, 1.0f, 1.0f};
                     front.local_rotation.x += 90.0f * -cos(fmod(elapsed_time, numbers::pi_v<float>)) * delta_time;
                     elapsed_time += delta_time;
                 };
@@ -344,20 +344,22 @@ void ProcessInput(GLFWwindow* window) {
                 current_anim = 4;
                 anim_func = [&back](const float delta_time) {
                     static float elapsed_time{};
-                    back.scale += -cos(fmod(elapsed_time, numbers::pi_v<float>)) * delta_time;
+                    const float scale_factor{-cos(fmod(elapsed_time, numbers::pi_v<float>)) * delta_time};
+                    back.scale.x += scale_factor;
+                    back.scale.y += scale_factor;
                     elapsed_time += delta_time;
                 };
             }
         });
 
         PollKeyPressedOnce(GLFW_KEY_1, []() {
-            const array<Object*, 4> sides{&scene[3], &scene[7], &scene[4], &scene[8]};
             uniform_int_distribution rand_side{0, 3};
             if (current_anim == 5) {
                 current_anim = 0;
                 anim_func = {};
             } else {
                 current_anim = 5;
+                const array<Object*, 4> sides{&scene[3], &scene[7], &scene[4], &scene[8]};
                 const int side_idx{rand_side(dre)};
                 auto& side1 = *sides[side_idx];
                 auto& side2 = *sides[(side_idx + 1) % 4];
@@ -366,9 +368,9 @@ void ProcessInput(GLFWwindow* window) {
                 side2.pivot = {};
                 side2.local_rotation.y = {};
                 anim_func = [&side1, &side2](const float delta_time) {
-                    side1.pivot = {-1.0f, 0.0f, 0.0f};
+                    side1.pivot = {-1.0f, 0.0f, 1.0f};
                     side1.local_rotation.y += 50.0f * delta_time;
-                    side2.pivot = {1.0f, 0.0f, 0.0f};
+                    side2.pivot = {1.0f, 0.0f, 1.0f};
                     side2.local_rotation.y += 50.0f * delta_time;
                 };
             }
@@ -380,49 +382,161 @@ void ProcessInput(GLFWwindow* window) {
             const int side_idx{rand_side(dre)};
             auto& side1 = *sides[side_idx];
             auto& side2 = *sides[(side_idx + 1) % 4];
-            side1.pivot = {};
-            side1.local_rotation.y = {};
-            side2.pivot = {};
-            side2.local_rotation.y = {};
-            const vec3 side1_pos{side1.position};
-            const vec3 side1_rot{side1.rotation};
-            const vec3 side2_pos{side2.position};
-            const vec3 side2_rot{side2.rotation};
-            static float alpha{};
-            alpha = 0.0f;
+            static float rotated_angle{};
+            rotated_angle = 0.0f;
             anim_func = [=, &side1, &side2](const float delta_time) {
-                side1.position = mix(side1_pos, side2_pos, alpha);
-                side1.rotation = mix(side1_rot, side2_rot, alpha);
-                side2.position = mix(side2_pos, side1_pos, alpha);
-                side2.rotation = mix(side2_rot, side1_rot, alpha);
-                if (alpha >= 1.0f) {
+                if (rotated_angle >= 90.0f) {
                     current_anim = 0;
                     swap(side1, side2);
                     anim_func = {};
                     return;
                 }
-                alpha = std::clamp(alpha + 0.5f * delta_time, 0.0f, 1.0f);
+                const float delta_angle{std::clamp(rotated_angle + 50.0f * delta_time, 0.0f, 90.0f) - rotated_angle};
+                side1.rotation.y -= delta_angle;
+                side2.rotation.y += delta_angle;
+                rotated_angle += delta_angle;
             };
         });
 
         PollKeyPressedOnce(GLFW_KEY_3, []() {
-
+            if (current_anim == 7) {
+                current_anim = 0;
+                anim_func = {};
+            } else {
+                current_anim = 7;
+                const array<Object*, 4> sides{&scene[3], &scene[7], &scene[4], &scene[8]};
+                anim_func = [sides](const float delta_time) {
+                    for (auto* side : sides)
+                        side->rotation.y += 50.0f * delta_time;
+                };
+            }
         });
         PollKeyPressedOnce(GLFW_KEY_4, []() {
-
+            if (current_anim == 8) {
+                current_anim = 0;
+                anim_func = {};
+            } else {
+                current_anim = 8;
+                const array<Object*, 4> sides{&scene[5], &scene[7], &scene[6], &scene[8]};
+                anim_func = [sides](const float delta_time) {
+                    for (auto* side : sides)
+                        side->rotation.x += 50.0f * delta_time;
+                };
+            }
         });
-    } else if (current_mesh_type == MeshType::kPyramid) {
+    } else if (current_mesh_type == MeshType::kPyramid && current_anim != 7) {
         PollKeyPressedOnce(GLFW_KEY_5, []() {
-
+            const array<Object*, 4> sides{&scene[9], &scene[10], &scene[11], &scene[12]};
+            for (auto* side : sides)
+                side->pivot = {0.0f, -1.0f, 0.0f};
+            if (current_anim == 9) {
+                current_anim = 0;
+                anim_func = [sides](const float delta_time) {
+                    if (sides[0]->local_rotation.x <= 0.0f) {
+                        anim_func = {};
+                        return;
+                    }
+                    for (auto* side : sides)
+                        side->local_rotation.x = std::clamp(side->local_rotation.x - 50.0f * delta_time, 0.0f, 240.0f);
+                };
+            } else {
+                current_anim = 9;
+                anim_func = [sides](const float delta_time) {
+                    if (sides[0]->local_rotation.x >= 240.0f) {
+                        anim_func = {};
+                        return;
+                    }
+                    for (auto* side : sides)
+                        side->local_rotation.x = std::clamp(side->local_rotation.x + 50.0f * delta_time, 0.0f, 240.0f);
+                };
+            }
         });
         PollKeyPressedOnce(GLFW_KEY_6, []() {
-
+            static int idx{};
+            const array<Object*, 4> sides{&scene[9], &scene[10], &scene[11], &scene[12]};
+            for (auto* side : sides)
+                side->pivot = {0.0f, -1.0f, 0.0f};
+            if (current_anim == 10) {
+                current_anim = 0;
+                anim_func = [sides](const float delta_time) {
+                    if (sides[idx]->local_rotation.x <= 0.0f) {
+                        if (idx == 0) {
+                            anim_func = {};
+                            return;
+                        }
+                        --idx;
+                    }
+                    sides[idx]->local_rotation.x = std::clamp(sides[idx]->local_rotation.x - 50.0f * delta_time, 0.0f, 120.0f);
+                };
+            } else {
+                current_anim = 10;
+                anim_func = [sides](const float delta_time) {
+                    if (sides[idx]->local_rotation.x >= 120.0f) {
+                        if (idx == 3) {
+                            anim_func = {};
+                            return;
+                        }
+                        ++idx;
+                    }
+                    sides[idx]->local_rotation.x = std::clamp(sides[idx]->local_rotation.x + 50.0f * delta_time, 0.0f, 120.0f);
+                };
+            }
         });
         PollKeyPressedOnce(GLFW_KEY_7, []() {
-
+            current_anim = 11;
+            const array<Object*, 4> sides{&scene[9], &scene[11], &scene[10], &scene[12]};
+            uniform_int_distribution rand_side{0, 1};
+            const int side_idx{rand_side(dre)};
+            auto& side1 = *sides[side_idx];
+            auto& side2 = *sides[side_idx + 2];
+            static float rotated_angle{};
+            rotated_angle = 0.0f;
+            anim_func = [&side1, &side2](const float delta_time) {
+                if (rotated_angle >= 180.0f) {
+                    current_anim = 0;
+                    swap(side1, side2);
+                    anim_func = {};
+                    return;
+                }
+                const float delta_angle{std::clamp(rotated_angle + 50.0f * delta_time, 0.0f, 180.0f) - rotated_angle};
+                side1.rotation.y += delta_angle;
+                side1.position = vec3{sin(radians(side1.rotation.y)), 0.0f, cos(radians(side1.rotation.y))} * 0.5f;
+                side2.rotation.y += delta_angle;
+                side2.position = vec3{sin(radians(side2.rotation.y)), 0.0f, cos(radians(side2.rotation.y))} * 0.5f;
+                rotated_angle += delta_angle;
+            };
         });
         PollKeyPressedOnce(GLFW_KEY_8, []() {
-
+            static float rotated_angle{};
+            const array<Object*, 4> sides{&scene[9], &scene[10], &scene[11], &scene[12]};
+            for (auto* side : sides)
+                side->pivot = {0.0f, 1.0f, 0.0f};
+            rotated_angle = 0.0f;
+            if (current_anim == 12) {
+                anim_func = [sides](const float delta_time) {
+                    if (rotated_angle >= 120.0f) {
+                        current_anim = 0;
+                        anim_func = {};
+                        return;
+                    }
+                    const float delta_angle{std::clamp(rotated_angle + 50.0f * delta_time, 0.0f, 120.0f) - rotated_angle};
+                    for (auto* side : sides)
+                        side->local_rotation.x += delta_angle;
+                    rotated_angle += delta_angle;
+                };
+            } else {
+                current_anim = 12;
+                anim_func = [sides](const float delta_time) {
+                    if (rotated_angle >= 120.0f) {
+                        anim_func = {};
+                        return;
+                    }
+                    const float delta_angle{std::clamp(rotated_angle + 50.0f * delta_time, 0.0f, 120.0f) - rotated_angle};
+                    for (auto* side : sides)
+                        side->local_rotation.x -= delta_angle;
+                    rotated_angle += delta_angle;
+                };
+            }
         });
     }
 
@@ -489,19 +603,19 @@ void Initialize() {
         {"line", {}, {0.0f, -90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0, 0.5f}},  // axis Z
 
         // cube
-        {"quad", {1.0f, 0.0f, 0.0f}, {0.0f, 90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-        {"quad", {-1.0f, 0.0f, 0.0f}, {0.0f, -90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f}},
-        {"quad", {0.0f, 1.0f, 0.0f}, {-90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-        {"quad", {0.0f, -1.0f, 0.0f}, {90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
-        {"quad", {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-        {"quad", {0.0f, 0.0f, -1.0f}, {0.0f, 180.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}},
+        {"quad", {}, {0.0f, 90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
+        {"quad", {}, {0.0f, -90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f}},
+        {"quad", {}, {-90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+        {"quad", {}, {90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+        {"quad", {}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+        {"quad", {}, {0.0f, 180.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}},
 
         // pyramid
         {"tri", {0.5f, 0.0f, 0.0f}, {-30.0f, 90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, true},
         {"tri", {-0.5f, 0.0f, 0.0f}, {-30.0f, -90.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f}, true},
         {"tri", {0.0f, 0.0f, 0.5f}, {-30.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, true},
         {"tri", {0.0f, 0.0f, -0.5f}, {-30.0f, 180.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 1.0f}, true},
-        {"quad", {0.0f, -0.86f, 0.0f}, {90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, true}};
+        {"quad", {0.0f, 1.0f - sqrt(3.0f) / 2.0f, 0.0f}, {90.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, true}};
 
     camera_pos = {3.0f, 2.0f, 2.0f};
     mat4 camera_rotation{1.0f};
