@@ -388,20 +388,6 @@ void ProcessInput(GLFWwindow* window) {
             const int side_idx{rand_side(dre)};
             auto& side1 = *sides[side_idx];
             auto& side2 = *sides[(side_idx + 1) % 4];
-            /*static float rotated_angle{};
-            rotated_angle = 0.0f;
-            anim_func = [=, &side1, &side2](const float delta_time) {
-                if (rotated_angle >= 90.0f) {
-                    current_anim = 0;
-                    swap(side1, side2);
-                    anim_func = {};
-                    return;
-                }
-                const float delta_angle{std::clamp(rotated_angle + 50.0f * delta_time, 0.0f, 90.0f) - rotated_angle};
-                side1.rotation.y -= delta_angle;
-                side2.rotation.y += delta_angle;
-                rotated_angle += delta_angle;
-            };*/
             static float rotated_angle{};
             rotated_angle = 0.0f;
             anim_func = [&side1, &side2](const float delta_time) {
