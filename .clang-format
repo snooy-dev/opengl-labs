@@ -4,3 +4,4 @@ UseTab: Never
 ContinuationIndentWidth: 4
 AlignAfterOpenBracket: DontAlign
 ColumnLimit: 0
+AccessModifierOffset: -4
